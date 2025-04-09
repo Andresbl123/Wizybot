@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { MdSend } from "react-icons/md";
 
 import { Textfield } from "./components/Textfield";
 import { User } from "./components/User";
@@ -6,7 +7,11 @@ import { User } from "./components/User";
 import { Message } from "./services/config.types";
 import { Button } from "./components/Button";
 import { ContainerChat } from "./components/Chat/ContainerChat";
-import { getAssistantResponse } from "./utils";
+import { getAssistantResponse } from "./utils/responseChatbot";
+import { maperGetProductsDemo } from "./services/products/data";
+import { URLS } from "./services/config";
+import { ProductDemo } from "./services/products/interfaces";
+import { getRandomPiece } from "./utils/sliceArrayProducts";
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([
@@ -14,6 +19,7 @@ function App() {
       id: "1",
       content: "Hello there! Do you need any help?",
       role: "assistant",
+      products: [],
     },
   ]);
   const [input, setInput] = useState("");
@@ -26,13 +32,11 @@ function App() {
     }
   }, [messages]);
 
-  // Función para manejar el envío de mensajes
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!input.trim()) return;
 
-    // Agregar mensaje del usuario
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -44,21 +48,38 @@ function App() {
     setInput("");
     setIsLoading(true);
 
-    // Simular respuesta del asistente después de un breve retraso
-    setTimeout(() => {
+    const { response, showProducts } = getAssistantResponse(input);
+
+    if (showProducts) {
+      const products = await maperGetProductsDemo(URLS.productDemos);
+
+      const copyproducts = getRandomPiece<ProductDemo>(products, 5);
+
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: getAssistantResponse(input),
+        content: response,
         timestamp: new Date(),
+        products: copyproducts,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
       setIsLoading(false);
-    }, 3000);
+    } else {
+      setTimeout(() => {
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: response,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsLoading(false);
+      }, 3000);
+    }
   };
 
-  // Función simple para generar respuestas del asistente
   getAssistantResponse(input);
 
   return (
@@ -76,8 +97,12 @@ function App() {
             className="flex-1"
             disabled={isLoading}
           />
-          <Button type="submit" disabled={isLoading || !input.trim()}>
-            Enviar
+          <Button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            variant="primary"
+          >
+            <MdSend />
           </Button>
         </form>
       </div>

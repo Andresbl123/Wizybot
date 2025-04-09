@@ -1,3 +1,4 @@
+import { ProductCarousel } from "../../ProductCarousel";
 import { Message } from "@src/services/config.types";
 
 interface ChatMessageProps {
@@ -19,7 +20,18 @@ export function ChatMessage(props: ChatMessageProps) {
             : "bg-gray-200 text-gray-800"
         }`}
       >
-        {message.content}
+        <p className="text-sm">{message.content}</p>
+        {message.products && message.products.length > 0 && (
+          <ProductCarousel products={message.products} />
+        )}
+        <div>
+          <span className="text-xs text-gray-500">
+            {new Date(message?.timestamp || Date.now()).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        </div>
       </div>
     </div>
   );
